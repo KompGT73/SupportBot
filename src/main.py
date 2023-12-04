@@ -31,11 +31,17 @@ async def back_to_main_menu(message: types.Message, state: FSMContext):
     await call_back_to_main_menu(user_id, state)
 
 
+async def allowed_user(username):
+    allowed_users_lst = await AllowedUserService().get_all_allowed_users()
+    if '@' + username in allowed_users_lst or username == settings.main_admin:
+        return True
+    return False
+
+
 @dp.message_handler(Command('support_call'))
 async def support_call(message: types.Message):
-    allowed_users_lst = await AllowedUserService().get_all_allowed_users()
 
-    if '@' + message.from_user.username in allowed_users_lst:
+    if await allowed_user(message.from_user.username):
         await bot.send_message(message.from_user.id,
                                'Вы начали процесс открытия тикета. 💬 Нажав на кнопку'
                                ' "Вернуться в главное меню ⏪" вы можете прервать'
@@ -112,10 +118,8 @@ async def get_steam_id_and_open_ticket(message: types.Message, state: FSMContext
 
 @dp.callback_query_handler()
 async def callback_query_handler(callback_query: types.CallbackQuery, state: FSMContext):
-    allowed_users = await AllowedUserService().get_all_allowed_users()
-    print(callback_query)
 
-    if '@' + callback_query.from_user.username in allowed_users:
+    if await allowed_user(callback_query.from_user.username):
         if callback_query.data == 'open-support-ticket':
             await bot.send_message(callback_query.from_user.id,
                                    'Вы начали процесс открытия тикета. 💬 Нажав на кнопку'
@@ -133,9 +137,7 @@ async def callback_query_handler(callback_query: types.CallbackQuery, state: FSM
 
 @dp.message_handler(Command('main_admin'))
 async def call_main_admin_command(message: types.Message):
-    allowed_users_lst = await AllowedUserService().get_all_allowed_users()
-
-    if '@' + message.from_user.username in allowed_users_lst:
+    if await allowed_user(message.from_user.username):
         await call_main_admin(message.from_user.id)
     else:
         await bot.send_message(message.from_user.id, 'У вас нету доступа к данной функции! ❌')
