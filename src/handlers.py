@@ -13,7 +13,7 @@ async def support_call_handler(user_id):
         await bot.send_message(user_id, 'Выберите панель:', reply_markup=panels_markup)
         await SupportOpenTicketStates.panel.set()
     else:
-        await bot.send_message(user_id, "You have opened tickets. Close them before trying to open new.")
+        await bot.send_message(user_id, "У вас есть открытые тикеты. Закройте их перед тем как открыть новый ❌")
 
 
 async def call_main_admin(user_id):
@@ -43,13 +43,13 @@ async def open_support_ticket(
             password,
             steam_id
         )
-        admin_message = (f"New support ticket was opened now:\n"
-                         f"Link: {settings.bot_link}?start={support_ticket_token}")
+        admin_message = (f"Новый саппорт тикет был только что открыт: 💬\n"
+                         f"Ссылка: {settings.bot_link}?start={support_ticket_token}")
         await bot.send_message(settings.admins_chat_id, admin_message, parse_mode=ParseMode.HTML)
         await bot.send_message(
             user_id,
-            "Support ticket was opened. You can write messages here.",
+            "Саппорт тикет открыт. ✅ После присоединения администратора 👨‍🔧Вы можете писать сообщения.",
             reply_markup=close_ticket_markup
         )
     else:
-        await bot.send_message(user_id, "You have opened tickets. Close them before trying to open new.")
+        await bot.send_message(user_id, "У вас есть открытые тикеты. Закройте их перед тем как открыть новый ❌")

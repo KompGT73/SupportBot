@@ -1,9 +1,9 @@
 from core.database import async_session_maker
 from utils.tokens import generate_token
-from models import SupportTicket, TicketMessages, User
+from models import SupportTicket, TicketMessages, User, AllowedUser
 from dataclasses_ import ResponseData
 
-from sqlalchemy import select, exists, insert, or_, and_, false, update
+from sqlalchemy import select, exists, insert, or_, and_, false, update, delete
 
 from core.config import settings
 
@@ -12,6 +12,51 @@ class BaseService:
 
     def __init__(self):
         self.session = async_session_maker()
+
+
+class AllowedUserService(BaseService):
+
+    async def allowed_user_exists(self, username: str):
+        async with self.session.begin():
+            stmt = exists(AllowedUser).where(AllowedUser.username == username).select()
+            res = await self.session.execute(stmt)
+            return res.scalar()
+
+    async def insert_allowed_user(self, username):
+        user_exists = await self.allowed_user_exists(username)
+        if user_exists:
+            return ResponseData(error='Этот ник уже есть в списке разрешенных пользователей. '
+                                      'Вы не можете добавить его повторно! ❌')
+
+        async with self.session.begin():
+            stmt = insert(AllowedUser).values(username=username)
+            await self.session.execute(stmt)
+            await self.session.commit()
+
+    async def delete_allowed_user(self, username):
+        user_exists = await self.allowed_user_exists(username)
+        if not user_exists:
+            return ResponseData(
+                error='Этого ника нету в списке разрешенных пользователей! ❌'
+            )
+
+        async with self.session.begin():
+            stmt = delete(AllowedUser).where(AllowedUser.username == username)
+            await self.session.execute(stmt)
+            await self.session.commit()
+
+    async def get_all_allowed_users(self) -> list[str]:
+        allowed_usernames = []
+
+        async with self.session.begin():
+            stmt = select(AllowedUser)
+            res = await self.session.execute(stmt)
+            users = res.fetchall()
+            for user in users:
+                user = user[0]
+                allowed_usernames.append(user.username)
+
+        return allowed_usernames
 
 
 class UserService(BaseService):
@@ -210,6 +255,14 @@ class SupportTicketService(BaseService):
             ticket_data['admin_id'] = ticket.admin_id
             ticket_data['user_id'] = ticket.user_id
             ticket_data['token'] = ticket.token
+            new_ticket_data = {
+                'panel': ticket.panel,
+                'link': ticket.link,
+                'login': ticket.login,
+                'password': ticket.password,
+                'steam_id': ticket.steam_id
+            }
+            ticket_data.update(new_ticket_data)
             return ticket_data
 
     async def get_ticket_data_by_token(self, ticket_token):

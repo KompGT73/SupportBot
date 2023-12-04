@@ -61,3 +61,10 @@ class SupportTicket(Base):
 
     def __str__(self):
         return self.__repr__()
+
+
+class AllowedUser(Base):
+    __tablename__ = 'allowed_users'  # noqa
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    username: Mapped[str] = mapped_column(String(80), nullable=False, unique=True)

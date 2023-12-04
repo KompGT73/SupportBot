@@ -10,7 +10,13 @@ from core.config import settings
 
 def can_ignore_message_text(text):
     ignore_text_list = [
-        '/support', 'Close Ticket', 'start', '/help', '/main_admin', 'Закрыть тикет ❎'
+        '/support',
+        'Close Ticket',
+        'start',
+        '/help',
+        '/main_admin',
+        'Закрыть тикет ❎',
+        'Вернуться в главное меню ⏪'
     ]
     for word in ignore_text_list:
         if word in text:
@@ -41,7 +47,7 @@ class SupportMiddleware(BaseMiddleware):
             )
         else:
             if current_ticket_data['admin_id'] is None:
-                await bot.send_message(user_id, 'The administration has not yet joined the chat')
+                await bot.send_message(user_id, 'Администрация еще не присоединилась к чату! ❌')
             else:
                 await message.copy_to(current_ticket_data['admin_id'])
 

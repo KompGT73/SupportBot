@@ -1,5 +1,13 @@
 from aiogram import types
 
+# GO TO MAIN MENU
+main_menu_markup = types.InlineKeyboardMarkup(row_width=1)
+back_to_main_menu = types.InlineKeyboardButton(
+    'Вернуться в главное меню ⏪',
+    callback_data='back_to_main'
+)
+main_menu_markup.add(back_to_main_menu)
+
 # PANELS
 panels_markup = types.InlineKeyboardMarkup(row_width=2)
 faker_panel_button = types.InlineKeyboardButton('Faker 1️⃣', callback_data='faker-panel')
