@@ -152,37 +152,26 @@ async def close_ticket(message: types.Message):
         await bot.send_message(user_id, response_data.error)
         return
 
-    message_for_opponent = None
-
-    if response_data.ticket_closed:
-        if response_data.opponent_id is not None:
-            await bot.send_message(
-                response_data.opponent_id,
-                'Тикет успешно закрыт ✅',
-                parse_mode=ParseMode.MARKDOWN
-            )
-            ticket_data = response_data.data
-            ticket_info_text = (f'Тикет: {response_data.ticket_token}\n'
-                                f'Пользователь: @{ticket_data["user_username"]}\n'
-                                f'Администратор: @{ticket_data["admin_username"]}\n'
-                                f'Тикет закрыт: {ticket_data["closed"]}\n\n'
-                                f'Данные пользователя:\n\n'
-                                f'Панель: {ticket_data["panel"]}\n'
-                                f'Ссылка: {ticket_data["link"]}\n'
-                                f'Логин: {ticket_data["login"]}\n'
-                                f'Пароль: {ticket_data["password"]}\n'
-                                f'SteamID: {ticket_data["steam_id"]}')
-            await bot.send_message(settings.tickets_ends_chat_id, ticket_info_text)
-
-    else:
-        message_for_opponent = ('Ваш оппонент хочет закрыть тикет.'
-                                ' Если вы согласны закрыть его, нажмите на'
-                                ' кнопку "Закрыть тикет ❎", после чего тикет'
-                                ' будет закрыт.')
-
+    if response_data.opponent_id is not None:
+        await bot.send_message(
+            response_data.opponent_id,
+            'Тикет успешно закрыт вашим оппонентом ✅',
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=ReplyKeyboardRemove()
+        )
+        ticket_data = response_data.data
+        ticket_info_text = (f'Тикет: {response_data.ticket_token}\n'
+                            f'Пользователь: @{ticket_data["user_username"]}\n'
+                            f'Администратор: @{ticket_data["admin_username"]}\n'
+                            f'Тикет закрыт: {ticket_data["closed"]}\n\n'
+                            f'Данные пользователя:\n\n'
+                            f'Панель: {ticket_data["panel"]}\n'
+                            f'Ссылка: {ticket_data["link"]}\n'
+                            f'Логин: {ticket_data["login"]}\n'
+                            f'Пароль: {ticket_data["password"]}\n'
+                            f'SteamID: {ticket_data["steam_id"]}')
+        await bot.send_message(settings.tickets_ends_chat_id, ticket_info_text)
     await bot.send_message(user_id, f"{response_data.message}")
-    if response_data.opponent_id is not None and message_for_opponent is not None:
-        await bot.send_message(response_data.opponent_id, message_for_opponent)
 
 
 @dp.message_handler(commands=['start'])

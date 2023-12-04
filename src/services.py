@@ -174,16 +174,11 @@ class SupportTicketService(BaseService):
                 return False
             return True
 
-    async def update_ticket_close_requests(self, ticket, user_id):
-        stmt = update(SupportTicket).where(SupportTicket.id == ticket.id).values(close_requests_ids=[user_id])
-        await self.session.execute(stmt)
-
     async def close_user_ticket(self, user_id) -> ResponseData:
         async with self.session.begin():
             ticket = await self.get_active_ticket_for_user(user_id) or await self.get_ticket_as_admin(user_id)
 
             if ticket is not None:
-                ticket_already_closed = False
 
                 default_response_data = ResponseData(
                     message='Вы успешно закрыли этот тикет! ✅',
@@ -196,43 +191,25 @@ class SupportTicketService(BaseService):
                             error='Этот тикет уже закрыт! ❌'
                         )
                     response_data = default_response_data
-                elif ticket.admin_id is not None:
+                else:
                     opponent_id = ticket.admin_id if ticket.admin_id != user_id else ticket.user_id
+                    response_data = default_response_data
+                    response_data.opponent_id = opponent_id
+                    response_data.data = {
+                        'user_username': ticket.user_username,
+                        'admin_username': ticket.admin_username,
+                        'closed': True,
+                        'panel': ticket.panel,
+                        'link': ticket.link,
+                        'login': ticket.login,
+                        'password': ticket.password,
+                        'steam_id': ticket.steam_id
+                    }
 
-                    if await self.user_in_ticket_close_request_ids(ticket, user_id):
-                        return ResponseData(error='Вы уже проголосовали за закрытие тикета! ❌'
-                                                  ' Пожалуйста, подождите своего оппонента.')
-
-                    if ticket.close_requests < 1:
-
-                        response_data = ResponseData(
-                            message=(f'Вы хотите закрыть тикет'
-                                     f'\nЗапросы на закрытие тикета: 1/2'),
-                            ticket_closed=False,
-                            opponent_id=opponent_id
-                        )
-                    else:
-                        response_data = default_response_data
-                        response_data.opponent_id = opponent_id
-                        response_data.data = {
-                            'user_username': ticket.user_username,
-                            'admin_username': ticket.admin_username,
-                            'closed': True,
-                            'panel': ticket.panel,
-                            'link': ticket.link,
-                            'login': ticket.login,
-                            'password': ticket.password,
-                            'steam_id': ticket.steam_id
-                        }
-
-                if response_data.ticket_closed:
-                    ticket.closed = True
-
+                ticket.closed = True
                 response_data.ticket_token = ticket.token
-                if not ticket_already_closed:
-                    ticket.close_requests += 1
+                ticket.close_requests += 1
                 ticket.close_requests_ids.append(str(user_id))
-                # await self.update_ticket_close_requests(ticket, user_id)
                 await self.session.commit()
                 return response_data
             else:
